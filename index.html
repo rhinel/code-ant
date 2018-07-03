@@ -138,17 +138,18 @@
     // 执行程序
     (async () => {
       // 尝试统计配置
-      const timesMax = 3000;
-      let timesCount = 0;
-      let roundCount = 0;
-      let successCount = 0;
-      let done = false;
+      const timesMax = 3000;           // 最大尝试步数
+      let timesCount = 0;              // 每次尝试步数计数
+      let roundCount = 0;              // 尝试多少轮
+      let successCount = 0;            // 成功尝试多少轮
+      let done = false;                // 当前是否成功
 
       // 信息素配置
-      let pheromones = new Set();
-      let pheromonesTmp = new Set();
-      const damping = 0.2;
-      const randomSearch = 1;
+      let pheromones = new Set();      // 全部保存的信息素点
+      let pheromonesTmp = new Set();   // 当前信息素点
+      const damping = 0.2;             // 信息素挥发度
+      const changePoint = 2;           // 信息素变动数
+      const randomSearch = 1;          // 随机搜索多少倍新点（最大）
 
       // 一次尝试
       const oneTry = async () => {
@@ -313,8 +314,8 @@
                   const pi = JSON.parse(i);
                   initArr.forEach(j => {
                     if (pi[0] == j[0] + 2 && pi[1] == j[1] + 2) {
-                      j[2]++;
-                      if (random(0, 10) < (damping * 10)) j[2]--;
+                      j[2] += changePoint;
+                      if (random(0, 10) < (damping * 10)) j[2] -= changePoint;
                     }
                   });
                 });
