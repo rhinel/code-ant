@@ -131,7 +131,7 @@
     const initArr = [];
     for (let i = 0; i < 30; i++) {
       for (let j = 0; j < 30; j++) {
-        initArr.push([15 * j + 10, 15 * i + 10, 0]);
+        initArr.push([15 * j + 10, 15 * i + 10, i == 29 && j == 29 ? 5 : 0]);
       }
     }
 
