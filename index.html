@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>code-ant</title>
+  <style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+
+		body {
+			background: #000;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			display: block;
+      color: red;
+      font-size: 14px;
+		}
+
+    .main {
+      display: flex;
+    }
+
+    .left-side {
+      width: 460px;
+    }
+
+    .right-side {
+      flex: 1;
+    }
+
+    .left-side,
+    .right-side {
+      height: 100vh;
+    }
+
+    #container {
+      border: 1px solid lime;
+    }
+
+		#canvas {
+			display: block;
+		}
+
+    #countview {
+      color: lime;
+      padding: 1em;
+    }
+
+    #tryview {
+      max-height: calc(100vh - 460px - 48px);
+      overflow-y: auto;
+      padding: 1em;
+    }
+
+    #textview {
+      padding: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="left-side">
+      <div id="container">
+        <canvas width="1440" height="800" id="canvas"></canvas>
+      </div>
+      <div align="left" id="countview"></div>
+      <div align="left" id="tryview"></div>
+    </div>
+    <div class="right-side">
+      <div align="left" id="textview"></div>
+    </div>
+  </div>
+  <script>
+    // 初始化范围内随机数
+    const random = function (start, end) {
+      const length = end - start + 1;
+      return Math.floor(Math.random() * length + start);
+    }
+
+    // 初始化console显示
+    const countview = document.querySelector('#countview');
+    const showCount = (count) => {
+      countview.innerHTML = count;
+    }
+
+    // 初始化console显示
+    const tryview = document.querySelector('#tryview');
+    const showtry = (...trylog) => {
+      if (!trylog[0]) {
+        tryview.innerHTML = '';
+        return;
+      }
+      const div = document.createElement('div');
+      div.innerHTML = `${String(trylog)}`;
+      if (tryview.firstChild) {
+        tryview.firstChild.prepend(div);
+      } else {
+        tryview.appendChild(div);
+      }
+    }
+
+    // 初始化console显示
+    const textview = document.querySelector('#textview');
+    const showlog = (...log) => {
+      const div = document.createElement('div');
+      div.innerHTML = `${new Date()} ${String(log)}`;
+      if (textview.firstChild) {
+        textview.firstChild.prepend(div);
+      } else {
+        textview.appendChild(div);
+      }
+    }
+  </script>
+
+  <script>
+    // 初始化绘图
+    const canvas = document.querySelector('#canvas');
+    canvas.width = 30 * 5 + 31 * 10;
+    canvas.height = 30 * 5 + 31 * 10;
+    const ctx = canvas.getContext('2d');
+
+    // 初始化绘图点（含绘图信息素信息点）
+    const initArr = [];
+    for (let i = 0; i < 30; i++) {
+      for (let j = 0; j < 30; j++) {
+        initArr.push([15 * j + 10, 15 * i + 10, 0]);
+      }
+    }
+
+    // 执行程序
+    (async () => {
+      // 尝试统计配置
+      const timesMax = 10000;
+      let timesCount = 0;
+      let roundCount = 0;
+      let successCount = 0;
+      let done = false;
+
+      // 信息素配置
+      let pheromones = new Set();
+      let pheromonesTmp = new Set();
+      const damping = 0.3;
+      const randomSearch = 1;
+
+      // 一次尝试
+      const oneTry = async () => {
+        // 画背景，标记信息素
+        showCount('画点中……');
+        showtry();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < initArr.length; i++) {
+          await new Promise((resolve, reject) => {
+            setTimeout(() => {
+              ctx.fillStyle=[
+                'rgba(',
+                0,
+                ',',
+                255,
+                ',',
+                0,
+                ',',
+                initArr[i][2] / (successCount + 5),
+                ')'
+              ].join('');
+              ctx.fillRect(initArr[i][0], initArr[i][1], 4, 4);
+              resolve();
+            }, 0);
+          });
+        }
+
+        // 起点和终点
+        ctx.fillStyle='red';
+        ctx.fillRect(9, 9, 6, 6);
+        ctx.fillStyle='blue';
+        ctx.fillRect(444, 444, 6, 6);
+
+        const start = [12, 12];
+        const end = [15 * 29 + 12, 15 * 29 + 12];
+
+        // 开始找
+        while ((start[0] != end[0] || start[1] != end[1]) && timesCount < timesMax)
+        {
+          showCount('第' + timesCount + '步尝试中……');
+          timesCount++;
+          await new Promise((resolve, reject) => {
+            setTimeout(() => {
+
+              // 确定下一步组合范围
+              let xRange = [];
+              let yRange = [];
+              if (start[0] == 12) {
+                xRange = [0, 15];
+              } else if (start[0] == end[0]) {
+                xRange = [-15, 0];
+              } else {
+                xRange = [-15, 0, 15];
+              }
+
+              if (start[1] == 12) {
+                yRange = [0, 15];
+              } else if (start[1] == end[1]) {
+                yRange = [-15, 0];
+              } else {
+                yRange = [-15, 0, 15];
+              }
+
+              // 所有可选组合
+              let newPointList = [];
+
+              for (let i = 0; i < xRange.length; i++) {
+                for (let j = 0; j < yRange.length; j++) {
+                  if (!xRange[i] && !yRange[j]) continue;
+                  newPointList.push([start[0] + xRange[i], start[1] + yRange[j]]);
+                }
+              }
+
+              let newPointListCount = newPointList.length;
+
+              // 优先选择信息素，并添加随机探索
+              newPointList = (() => {
+                const filterList = [];
+                const filterElse = [];
+                newPointList.forEach(value => {
+                  if (pheromones.has(JSON.stringify(value))) {
+                    filterList.push(value);
+                  } else {
+                    filterElse.push(value);
+                  }
+                })
+
+                if (!filterList.length) {
+                  return filterElse;
+                } else if (!filterElse.length) {
+                  return filterList;
+                } else {
+                  const randomIndex = new Set();
+                  const ramdomMax = Math.min(
+                    filterList.length * randomSearch,
+                    filterElse.length
+                  );
+                  while (randomIndex.size < ramdomMax)
+                  {
+                    randomIndex.add(random(0, filterElse.length - 1));
+                  }
+
+                  randomIndex.forEach(index => {
+                    filterList.push(filterElse[index]);
+                  })
+
+                  return filterList;
+                }
+              })();
+
+              let newPointListMaxPH = 0;
+
+              // 信息素处理权重
+              newPointList = (() => {
+                const filterList = [...newPointList];
+                newPointList.forEach(i => {
+                  initArr.forEach(j => {
+                    if (
+                      (i[0] == (j[0] + 2))
+                        && (i[1] == (j[1] + 2))
+                        && j[2]
+                    ) {
+                      for (let k = 0; k < j[2]; k++) {
+                        filterList.push([...i, j[2]]);
+                        if (newPointListMaxPH < j[2]) newPointListMaxPH = j[2];
+                      }
+                    }
+                  })
+                })
+                return filterList;
+              })();
+
+              // 绘制下一步
+              const newPoint = newPointList[random(0, newPointList.length - 1)];
+
+              showtry(
+                '下一步有' + newPointListCount + '个点,我选择',
+                `[${newPoint[0]}, ${newPoint[1]}]`,
+                newPoint[2] ? `${newPoint[2]}个信息素` : '新尝试',
+                `${newPoint[2] ? `${newPoint[2] == newPointListMaxPH ? '最优点' : '不是最优点'}` : ''}`
+              );
+
+              ctx.beginPath();
+              ctx.lineWidth = 1;
+              ctx.strokeStyle = 'red';
+              ctx.moveTo(start[0], start[1]);
+              ctx.lineTo(newPoint[0], newPoint[1]);
+              ctx.stroke();
+
+              start[0] = newPoint[0];
+              start[1] = newPoint[1];
+
+              // 添加本次信息素
+              pheromonesTmp.add(JSON.stringify(start));
+
+              // 成功了
+              if (start[0] == end[0] && start[1] == end[1]) {
+                done = true;
+
+                // 保留信息素，衰减信息素
+                pheromonesTmp.forEach(i => {
+                  const pi = JSON.parse(i);
+                  initArr.forEach(j => {
+                    if (pi[0] == j[0] + 2 && pi[1] == j[1] + 2) {
+                      j[2]++;
+                      if (random(0, 10) < (damping * 10)) j[2]--;
+                    }
+                  });
+                });
+                pheromones = new Set(
+                  initArr
+                    .filter(_ => _[2] > 0)
+                    .map(_ => JSON.stringify([_[0] + 2, _[1] + 2]))
+                );
+              }
+              resolve();
+            }, 5);
+          })
+        }
+      }
+
+      // 开始尝试
+      while (true)
+      {
+        pheromonesTmp = new Set();
+        timesCount = 0;
+        roundCount++;
+        await oneTry();
+        if (done) successCount++;
+        showlog('第' + roundCount + '次尝试', timesCount, timesCount == timesMax ? '失败啦' : '成功啦' );
+      }
+    })();
+  </script>
+</body>
+</html>
