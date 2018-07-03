@@ -138,7 +138,7 @@
     // 执行程序
     (async () => {
       // 尝试统计配置
-      const timesMax = 10000;
+      const timesMax = 3000;
       let timesCount = 0;
       let roundCount = 0;
       let successCount = 0;
@@ -147,7 +147,7 @@
       // 信息素配置
       let pheromones = new Set();
       let pheromonesTmp = new Set();
-      const damping = 0.3;
+      const damping = 0.2;
       const randomSearch = 1;
 
       // 一次尝试
@@ -331,14 +331,15 @@
       }
 
       // 开始尝试
-      while (true)
+      while (timesCount != 30)
       {
         pheromonesTmp = new Set();
         timesCount = 0;
         roundCount++;
         await oneTry();
         if (done) successCount++;
-        showlog('第' + roundCount + '次尝试', timesCount, timesCount == timesMax ? '失败啦' : '成功啦' );
+        showlog('第' + roundCount + '次尝试', timesCount, timesCount == timesMax ? '失败啦' : '成功啦');
+        showlog(`本次${pheromonesTmp.size}个节点，总共有记录${pheromones.size}个节点`);
       }
     })();
   </script>
