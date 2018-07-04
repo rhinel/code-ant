@@ -19,3 +19,8 @@
 本文采用可视的方式模拟蚂蚁寻路过程，旨在理解蚂蚁算法的解题过程。
 
 [参考bz51/AntColonyAlgorithm](https://github.com/bz51/AntColonyAlgorithm)
+
+## todo
+
+同时跑多只蚂蚁，并将路径最短的蚂蚁信息素留下。
+转化成chart图表数据。
