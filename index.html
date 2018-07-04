@@ -122,16 +122,30 @@
 
   <script>
     // 初始化绘图
+    const pointWidth = 30;             // 点阵宽度
+    const pointHeight = 30;            // 点阵高度
+    const pointWGep = 10;              // 点阵宽度间距
+    const pointHGep = 10;              // 点阵高度间距
+    const pointBig = 5;                // 点尺寸
+    const pheromonesStart = 30;        // 净空区域范围
+
     const canvas = document.querySelector('#canvas');
-    canvas.width = 30 * 5 + 31 * 10;
-    canvas.height = 30 * 5 + 31 * 10;
+    canvas.width = pointWidth * pointBig + ( pointWidth + 1 ) * pointWGep;
+    canvas.height = pointHeight * pointBig + ( pointHeight + 1 ) * pointHGep;
     const ctx = canvas.getContext('2d');
 
     // 初始化绘图点（含绘图信息素信息点）
     const initArr = [];
-    for (let i = 0; i < 30; i++) {
-      for (let j = 0; j < 30; j++) {
-        initArr.push([15 * j + 10, 15 * i + 10, i == 29 && j == 29 ? 5 : 0]);
+    for (let i = 0; i < pointWidth; i++) {
+      for (let j = 0; j < pointHeight; j++) {
+        initArr.push([
+          (pointWGep + pointBig) * j + pointWGep,
+          (pointHGep + pointBig) * i + pointHGep,
+          i > pheromonesStart && j > pheromonesStart
+            ? Math.min(i - pheromonesStart, j - pheromonesStart)
+            : 0
+          ]
+        );
       }
     }
 
@@ -142,18 +156,21 @@
       let timesCount = 0;              // 每次尝试步数计数
       let roundCount = 0;              // 尝试多少轮
       let successCount = 0;            // 成功尝试多少轮
-      let done = false;                // 当前是否成功
 
       // 信息素配置
-      let pheromones = new Set();      // 全部保存的信息素点
+      let pheromones = new Set(
+        initArr
+          .filter(_ => _[2] > 0)
+          .map(_ => JSON.stringify([_[0] + 2, [_[1] + 2]]))
+      );                               // 全部保存的信息素点
       let pheromonesTmp = new Set();   // 当前信息素点
-      const damping = 0.2;             // 信息素挥发度
-      const changePoint = 2;           // 信息素变动数
-      const randomSearch = 1;          // 随机搜索多少倍新点（最大）
+      const damping = 0.3;             // 信息素挥发度
+      const changePoint = 1;           // 信息素变动数
+      const randomSearch = 2;          // 随机搜索多少倍新点（最大）
 
-      // 一次尝试
-      const oneTry = async () => {
-        // 画背景，标记信息素
+
+      // 画背景，标记信息素
+      const drawBG = async () => {
         showCount('画点中……');
         showtry();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -176,22 +193,36 @@
             }, 0);
           });
         }
+      }
 
+      // 一次尝试
+      const oneTry = async () => {
         // 起点和终点
         ctx.fillStyle='red';
         ctx.fillRect(9, 9, 6, 6);
         ctx.fillStyle='blue';
-        ctx.fillRect(444, 444, 6, 6);
+        ctx.fillRect(
+          15 * ( pointWidth - 1 ) + 9,
+          15 * ( pointHeight - 1 ) + 9,
+          6,
+          6
+        );
 
         const start = [12, 12];
-        const end = [15 * 29 + 12, 15 * 29 + 12];
+        const end = [
+          15 * ( pointWidth - 1 ) + 12,
+          15 * ( pointHeight - 1 ) + 12
+        ];
+
+        let done = false;
 
         // 开始找
         while ((start[0] != end[0] || start[1] != end[1]) && timesCount < timesMax)
         {
           showCount('第' + timesCount + '步尝试中……');
           timesCount++;
-          await new Promise((resolve, reject) => {
+
+          done = await new Promise((resolve, reject) => {
             setTimeout(() => {
 
               // 确定下一步组合范围
@@ -202,7 +233,8 @@
               } else if (start[0] == end[0]) {
                 xRange = [-15, 0];
               } else {
-                xRange = [-15, 0, 15];
+                // xRange = [-15, 0, 15];
+                xRange = [0, 15];
               }
 
               if (start[1] == 12) {
@@ -210,7 +242,8 @@
               } else if (start[1] == end[1]) {
                 yRange = [-15, 0];
               } else {
-                yRange = [-15, 0, 15];
+                // yRange = [-15, 0, 15];
+                yRange = [0, 15];
               }
 
               // 所有可选组合
@@ -305,40 +338,51 @@
               // 添加本次信息素
               pheromonesTmp.add(JSON.stringify(start));
 
-              // 成功了
+              // 结果是否到达目标
               if (start[0] == end[0] && start[1] == end[1]) {
-                done = true;
-
-                // 保留信息素，衰减信息素
-                pheromonesTmp.forEach(i => {
-                  const pi = JSON.parse(i);
-                  initArr.forEach(j => {
-                    if (pi[0] == j[0] + 2 && pi[1] == j[1] + 2) {
-                      j[2] += changePoint;
-                      if (random(0, 10) < (damping * 10)) j[2] -= changePoint;
-                    }
-                  });
-                });
-                pheromones = new Set(
-                  initArr
-                    .filter(_ => _[2] > 0)
-                    .map(_ => JSON.stringify([_[0] + 2, _[1] + 2]))
-                );
+                resolve(true);
+              } else {
+                resolve();
               }
-              resolve();
             }, 5);
           })
         }
+
+        return done;
+      }
+
+      // 保留信息素，衰减信息素
+      const dutyPH = () => {
+        pheromonesTmp.forEach(i => {
+          const pi = JSON.parse(i);
+          initArr.forEach(j => {
+            if (pi[0] == j[0] + 2 && pi[1] == j[1] + 2) {
+              j[2] += changePoint;
+              if (random(0, 10) < (damping * 10)) j[2] -= changePoint;
+            }
+          });
+        });
+        pheromones = new Set(
+          initArr
+            .filter(_ => _[2] > 0)
+            .map(_ => JSON.stringify([_[0] + 2, _[1] + 2]))
+        );
       }
 
       // 开始尝试
-      while (timesCount != 30)
+      while (timesCount != Math.max(pointWidth, pointHeight))
       {
-        pheromonesTmp = new Set();
         timesCount = 0;
         roundCount++;
-        await oneTry();
-        if (done) successCount++;
+        pheromonesTmp = new Set();
+
+        await drawBG();
+        const done = await oneTry();
+        if (done) {
+          dutyPH();
+          successCount++;
+        }
+
         showlog('第' + roundCount + '次尝试', timesCount, timesCount == timesMax ? '失败啦' : '成功啦');
         showlog(`本次${pheromonesTmp.size}个节点，总共有记录${pheromones.size}个节点`);
       }
