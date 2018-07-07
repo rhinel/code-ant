@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>people-relationsship</title>
+  <style>
+    html,
+    body,
+    #main,
+    #main2 {
+      margin: 0;
+      padding: 0;
+    }
+
+    #main,
+    #main2 {
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+<body>
+  <!-- <div id="main"></div> -->
+  <div id="main2"></div>
+  <script src="./people-relationship.js"></script>
+  <script src="http://echarts.baidu.com/dist/echarts.min.js"></script>
+  <script>
+    const draw1 = () => {
+      const myChart = echarts.init(document.getElementById('main'));
+      const option = {
+        tooltip: {
+          formatter: function (x) {
+            return x.data.id ?
+              `
+                id: ${x.data.id}<br>
+                linkCount: ${x.data.linkCount}
+              ` :
+              `
+                ${x.data.source} >
+                ${x.data.target}
+              `;
+          },
+        },
+        series: [{
+          type: 'graph',
+          layout: 'force',
+          roam: true,
+          force: {
+            repulsion: 100,
+          },
+          label: {
+            normal: {
+              position: 'right',
+            }
+          },
+          data: people,
+          links: peopleLink,
+        }],
+      };
+
+      myChart.setOption(option);
+    }
+
+    // draw1();
+  </script>
+
+  <script>
+    const draw2 = () => {
+      const myChart = echarts.init(document.getElementById('main2'));
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          showDelay: 0,
+          axisPointer: {
+            show: true,
+            type: 'cross',
+            lineStyle: {
+              type: 'dashed',
+              width: 1
+            }
+          },
+          zlevel: 1
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            mark: {
+              show: true
+            },
+            dataZoom: {
+              show: true
+            },
+            dataView: {
+              show: true,
+              readOnly: false
+            },
+            restore: {
+              show: true
+            },
+            saveAsImage: {
+              show: true
+            }
+          }
+        },
+        xAxis: [{
+          type: 'value',
+          scale: true,
+          name: '迭代次数'
+        }],
+        yAxis: [{
+          type: 'value',
+          scale: true,
+          name: '路线长度'
+        }],
+        series: [{
+            name: '长度',
+            type: 'scatter',
+            large: true,
+            symbolSize: 3,
+            data: (function () {
+              var d = [];
+              for (var i = 0; i < groupTrySuccess.length; i++) {
+                for (var j = 0; j < groupTrySuccess[i].length; j++) {
+                  d.push([i, groupTrySuccess[i][j]]);
+                }
+              }
+              return d;
+            })()
+          }
+        ]
+      };
+
+      myChart.setOption(option);
+    }
+
+    draw2();
+  </script>
+</body>
+
+</html>

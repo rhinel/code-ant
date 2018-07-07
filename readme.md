@@ -1,4 +1,4 @@
-# 蚂蚁算法
+# 蚁群算法
 
 > 蚂蚁几乎没有视力，但他们却能够在黑暗的世界中找到食物，而且能够找到一条从洞穴到食物的最短路径。它们是如何做到的呢？
 
@@ -20,8 +20,10 @@
 
 [参考bz51/AntColonyAlgorithm](https://github.com/bz51/AntColonyAlgorithm)
 
-## todo
+## 实例
 
-同时跑多只蚂蚁，并将路径最短的蚂蚁信息素留下。
+计算随机人际关系链中，随机两个人的最短关系链。
 
-转化成chart图表数据。
+通过蚁群算法，我们可以轻松找到给定人际关系链中任意两人最短关系链。
+
+![people-relationship.html](https://user-images.githubusercontent.com/12730596/42410342-cb129f9c-821a-11e8-8c7a-0da18b3d59e6.jpg)
