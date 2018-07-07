@@ -111,18 +111,34 @@ const oneTry = (show) => {
     thisLinePeople.push(thisLineNext.id);
 
     while (thisLineNext && !searchDone.length) {
-      const thisCanChoose = thisLineNext.link
+      let thisCanChoose = thisLineNext.link
         .filter(_ => !thisLinePeople.includes(_.target));
 
       // 信息素信息
       const pheromone = thisCanChoose
         .filter(_ => _.pheromone > 0);
+      // const noPheromone = thisCanChoose
+      //   .filter(_ => _.pheromone == 0);
+
+      // thisCanChoose = [];
       pheromone.forEach(i => {
         for (let j = 0; j < i.pheromone; j++) {
           thisCanChoose.push(i);
-          thisCanChoose.push(i);
         }
       });
+
+      // const fix = Math.floor(
+      //   Math.floor(
+      //     noPheromone.length / (thisCanChoose.length + noPheromone.length) * 10
+      //   )
+      //   * (thisCanChoose.length + noPheromone.length) / 10
+      // );
+
+      // for (let i = 0; i < fix; i++) {
+      //   const randomIndex = random(0, noPheromone.length - 1);
+      //   thisCanChoose.push(noPheromone[randomIndex]);
+      //   noPheromone.splice(randomIndex, 1);
+      // }
 
       // next节点
       if (thisCanChoose.length) {

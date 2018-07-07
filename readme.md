@@ -26,4 +26,4 @@
 
 通过蚁群算法，我们可以轻松找到给定人际关系链中任意两人最短关系链。
 
-![people-relationship.html](https://user-images.githubusercontent.com/12730596/42410342-cb129f9c-821a-11e8-8c7a-0da18b3d59e6.jpg)
+![people-relationship.html](https://user-images.githubusercontent.com/12730596/42410655-bbdf905c-821f-11e8-85f0-c2c2304eb08f.png)
